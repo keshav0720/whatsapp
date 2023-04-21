@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@next/font": "13.3.0",
+    "email-validator": "^2.0.4",
     "eslint": "8.38.0",
     "eslint-config-next": "13.3.0",
     "firebase": "^9.20.0",
