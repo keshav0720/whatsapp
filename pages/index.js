@@ -6,11 +6,12 @@ import { auth, db } from '../firebase';
 import * as EmailValidator from "email-validator";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import {useCollection} from 'react-firebase-hooks/firestore';
+import { useRouter } from 'next/router';
 
-// const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
 	const [user] = useAuthState(auth);
+	const router = useRouter();
 	const userChatsRef = db.collection('chats').where("users", 'array-contains', user.email);
 	const [chatsSnapshot, loading, error] = useCollection(userChatsRef);
 
@@ -23,9 +24,16 @@ export default function Home() {
 			db.collection("chats").add({
 				users: [user.email, input],
 			});
-
 		}
 	};
+
+	const getRecipientEmail = (users) => {
+		return users.filter((userToFilter) => userToFilter !== user.email[0]);
+	}
+	const enterChat = (chatId) => {
+		router.push(`/chat/${chatId}`)
+	}
+
   return (
     <div className={styles.container}>
       <Head>
@@ -33,19 +41,21 @@ export default function Home() {
 
         <link rel="icon" href="/favicon.ico" />
       </Head>
-			<center>
+
 				<h1>Your chats</h1>
-			</center>
-				{chatsSnapshot?.docs.map((chat) => (
-					<div>
-						<li>{chat.data().users}</li>
-					</div>
-				))}
+
+
+
+			{chatsSnapshot?.docs.map((chat) => (
+				<div onClick={() => enterChat(chat.id)} key={chat.id}>
+					<h2 >{getRecipientEmail(chat.data().users)}</h2>
+				</div>
+			))}
 
 			<center>
 				<button onClick={createChat}>Start a chat</button>
 				<button onClick={() => auth.signOut()}>Log out</button>
 			</center>
     </div>
-  )
+  );
 }
