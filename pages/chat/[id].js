@@ -3,28 +3,32 @@ import {useCollection} from 'react-firebase-hooks/firestore';
 import {useAuthState} from "react-firebase-hooks/auth";
 import {auth, db} from "../../firebase";
 import { useRouter } from "next/router";
-import firebase from 'firebase/compat/app';
+// import firebase from 'firebase/app';
+import 'firebase/firestore';
+// import firestore from "firebase/compat/firestore";
 
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 
 function Chat() {
 	const [user] = useAuthState(auth);
 	const router = useRouter();
 	const inputRef = useRef();
 	const userChatRef = db.collection("chats").where("users", "array-contains", user.email);
-	const [chats, loading, error] = useCollection(userChatRef);
+	const [chats] = useCollection(userChatRef);
+	const [messagesSnapshot, loading] = useCollection(db.collection("chats").doc(router.query.id).collection("messages"));
 
 	const sendMessage = (e) => {
 		e.preventDefault();
 
-		db.collection('chats').doc(router.query.id).collection('messages').add({
-			timestamp: firebase.firestore.FieldValue.serverTimeStamp(),
+		db.collection("chats").doc(router.query.id).collection("messages").add({
+			timestamp: firebase.firestore.FieldValue.serverTimestamp(),
 			message: inputRef.current.value,
 			user: user.email,
-			photoURL: user.photoURL
-		}).then(() => {
-			inputRef.current.value = '';
-		})
-
+			photoURL: user.photoURL,
+		});
+		inputRef.current.value = "";
 	};
 	useEffect(() => {
 		if (chats) {
@@ -39,6 +43,12 @@ function Chat() {
 	return (
 		<div>
 			<h1>Your Chat Component</h1>
+
+			{messagesSnapshot?.docs.map((message) => (
+				<div key={message}>
+					<p>{message.data().user}: {message.data().message}</p>
+				</div>
+			))}
 			<form action="GET">
 				<input type="text" ref={inputRef}/>
 				<button type="submit" onClick={sendMessage}>Send message</button>
